@@ -1,6 +1,6 @@
 import { NativeModules, NativeEventEmitter, Platform, PermissionsAndroid } from 'react-native';
-import { HybridScamDetector } from './engine/HybridScamDetector';
-import { SmsMessage } from './types/detector';
+import { HybridScamDetector } from '../engine/HybridScamDetector';
+import { SmsMessage } from '../types/detector';
 
 /**
  * Android Native SMS Bridge Interface

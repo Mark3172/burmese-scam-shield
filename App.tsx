@@ -7,25 +7,34 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBanner } from './src/components/StatusBanner';
 import { MessageCard } from './src/components/MessageCard';
 import { TestMessageModal } from './src/components/TestMessageModal';
 import { getInitialMessages } from './src/data/sampleMessages';
-import { SmsMessage, ThreatLevel } from './src/types/detector';
+import { SmsMessage } from './src/types/detector';
 import { HybridScamDetector } from './src/engine/HybridScamDetector';
 
 export default function App() {
   const [messages, setMessages] = useState<SmsMessage[]>(getInitialMessages());
   const [activeTab, setActiveTab] = useState<'ALL' | 'QUARANTINE' | 'SAFE'>('ALL');
   const [modalVisible, setModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Counters
   const quarantinedCount = messages.filter(m => m.analysis.threatLevel === 'CRITICAL_SCAM').length;
   const suspiciousCount = messages.filter(m => m.analysis.threatLevel === 'SUSPICIOUS').length;
 
   const filteredMessages = messages.filter(m => {
+    // Search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchText = m.body.toLowerCase().includes(q) || m.sender.toLowerCase().includes(q);
+      if (!matchText) return false;
+    }
+
     if (activeTab === 'QUARANTINE') {
       return m.analysis.threatLevel === 'CRITICAL_SCAM' || m.analysis.threatLevel === 'SUSPICIOUS';
     }
@@ -55,15 +64,17 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6F9" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F5F7FA" />
 
-      {/* App Header */}
+      {/* Top App Header */}
       <View style={styles.topHeader}>
         <View style={styles.appTitleContainer}>
-          <Ionicons name="shield-half-sharp" size={26} color="#1E88E5" />
+          <View style={styles.logoBadge}>
+            <Ionicons name="shield-checkmark" size={20} color="#1E88E5" />
+          </View>
           <View style={styles.titleTextContainer}>
-            <Text style={styles.appTitle}>ShieldSMS (မြန်မာ)</Text>
-            <Text style={styles.appSubtitle}>On-Device AI Scam & Smishing Filter</Text>
+            <Text style={styles.appTitle}>ShieldSMS မြန်မာ</Text>
+            <Text style={styles.appSubtitle}>On-Device AI Scam & Smishing Protection</Text>
           </View>
         </View>
 
@@ -71,16 +82,34 @@ export default function App() {
           style={styles.scanButton} 
           onPress={() => setModalVisible(true)}
         >
-          <Ionicons name="add-circle" size={18} color="#FFF" />
+          <Ionicons name="add-circle" size={17} color="#FFF" />
           <Text style={styles.scanButtonText}>စစ်ဆေးရန်</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Status Warning Banner */}
+      {/* Real-time Status Banner with Live Indicator */}
       <StatusBanner 
+        totalCount={messages.length}
         quarantinedCount={quarantinedCount} 
         suspiciousCount={suspiciousCount} 
       />
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={17} color="#90A4AE" style={{ marginRight: 8 }} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="မက်ဆေ့ခ်ျ သို့မဟုတ် ပေးပို့သူ ရှာဖွေပါ..."
+          placeholderTextColor="#90A4AE"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Ionicons name="close-circle" size={17} color="#90A4AE" />
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* Filter Tabs */}
       <View style={styles.tabBar}>
@@ -97,8 +126,12 @@ export default function App() {
           style={[styles.tabItem, activeTab === 'QUARANTINE' && styles.activeTabItem]}
           onPress={() => setActiveTab('QUARANTINE')}
         >
-          <Text style={[styles.tabText, activeTab === 'QUARANTINE' && styles.activeTabText, { color: activeTab === 'QUARANTINE' ? '#D32F2F' : '#666' }]}>
-            🚨 လိမ်လည်မက်ဆေ့ခ်ျ ({quarantinedCount + suspiciousCount})
+          <Text style={[
+            styles.tabText, 
+            activeTab === 'QUARANTINE' && styles.activeTabText,
+            { color: activeTab === 'QUARANTINE' ? '#C62828' : '#546E7A' }
+          ]}>
+            🚨 လိမ်လည်မှု ({quarantinedCount + suspiciousCount})
           </Text>
         </TouchableOpacity>
 
@@ -106,13 +139,17 @@ export default function App() {
           style={[styles.tabItem, activeTab === 'SAFE' && styles.activeTabItem]}
           onPress={() => setActiveTab('SAFE')}
         >
-          <Text style={[styles.tabText, activeTab === 'SAFE' && styles.activeTabText]}>
+          <Text style={[
+            styles.tabText, 
+            activeTab === 'SAFE' && styles.activeTabText,
+            { color: activeTab === 'SAFE' ? '#2E7D32' : '#546E7A' }
+          ]}>
             ✅ လုံခြုံသည် ({messages.length - quarantinedCount - suspiciousCount})
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Message Stream */}
+      {/* Quarantined Messages List */}
       <FlatList
         data={filteredMessages}
         keyExtractor={item => item.id}
@@ -122,13 +159,13 @@ export default function App() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="mail-open-outline" size={48} color="#B0BEC5" />
-            <Text style={styles.emptyText}>မက်ဆေ့ခ်ျများ မရှိသေးပါ</Text>
+            <Ionicons name="file-tray-outline" size={48} color="#CFD8DC" />
+            <Text style={styles.emptyText}>မက်ဆေ့ခ်ျများ မတွေ့ရှိပါ</Text>
           </View>
         }
       />
 
-      {/* Test / Real-time Input Modal */}
+      {/* Interactive Scan & Test Modal */}
       <TestMessageModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -151,24 +188,32 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#ECEFF1',
   },
   appTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  logoBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#E3F2FD',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   titleTextContainer: {
-    marginLeft: 8,
+    marginLeft: 10,
   },
   appTitle: {
-    fontSize: 17,
+    fontSize: 16.5,
     fontWeight: '800',
     color: '#102027',
   },
   appSubtitle: {
-    fontSize: 11,
+    fontSize: 10.5,
     color: '#78909C',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   scanButton: {
     flexDirection: 'row',
@@ -177,18 +222,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 20,
-    gap: 4,
+    gap: 5,
   },
   scanButtonText: {
     color: '#FFF',
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '700',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    marginHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    color: '#263238',
   },
   tabBar: {
     flexDirection: 'row',
     backgroundColor: '#FFF',
     paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#ECEFF1',
     gap: 8,
@@ -196,23 +259,26 @@ const styles = StyleSheet.create({
   tabItem: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: '#ECEFF1',
+    borderRadius: 14,
+    backgroundColor: '#F5F7FA',
+    borderWidth: 1,
+    borderColor: '#ECEFF1',
   },
   activeTabItem: {
-    backgroundColor: '#CFD8DC',
+    backgroundColor: '#E2E8F0',
+    borderColor: '#CFD8DC',
   },
   tabText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '600',
     color: '#546E7A',
   },
   activeTabText: {
     color: '#263238',
-    fontWeight: '700',
+    fontWeight: '800',
   },
   listContent: {
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -220,9 +286,9 @@ const styles = StyleSheet.create({
     marginTop: 60,
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: 13.5,
     color: '#90A4AE',
-    marginTop: 10,
-    fontWeight: '500',
+    marginTop: 8,
+    fontWeight: '600',
   },
 });

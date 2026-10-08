@@ -8,14 +8,29 @@ export const SAMPLE_MESSAGES: Omit<SmsMessage, 'id' | 'analysis' | 'isRead'>[] =
     timestamp: Date.now() - 1000 * 60 * 15 // 15 mins ago
   },
   {
+    sender: 'Wave-Security',
+    body: 'WavePay အကောင့် Level 2 မြှင့်တင်ရန်နှင့် KYC အချက်အလက်မပြည့်စုံပါက အကောင့်ရပ်ဆိုင်းပါမည်။ http://wave-update.me/kyc တွင် အချက်အလက်ဖြည့်ပါ',
+    timestamp: Date.now() - 1000 * 60 * 45 // 45 mins ago
+  },
+  {
+    sender: 'Fast-Loan-MM',
+    body: 'အပေါင်ပစ္စည်းမလို ချက်ချင်းချေးငွေ သိန်း (၁၀၀) အထိ ၁၀ မိနစ်အတွင်း ရယူပါ။ အတိုးနှုန်း သက်သာစွာ ချေးယူရန် Telegram t.me/fast_loan_mm သို့ ဆက်သွယ်ပါ',
+    timestamp: Date.now() - 1000 * 60 * 90 // 1.5 hours ago
+  },
+  {
     sender: '09798123456',
-    body: '၂လုံး ၃လုံး VIP ပေါက်ဂဏန်း ၁၀၀% အပိုင်ပေးမည်။ ထွက်ဂဏန်း အတိအကျသိလိုပါက Telegram t.me/two_d_vip သို့ ဆက်သွယ်ပါ',
+    body: '၂လုံး ၃လုံး VIP ပေါက်ဂဏန်း ၁၀၀% အပိုင်ပေးမည်။ မနက်ပိုင်း ထွက်ဂဏန်း အတိအကျသိလိုပါက Telegram t.me/two_d_vip သို့ ဆက်သွယ်ပါ',
     timestamp: Date.now() - 1000 * 60 * 60 * 2 // 2 hours ago
+  },
+  {
+    sender: 'Delivery-Express',
+    body: 'လူကြီးမင်း၏ ပါဆယ်ပစ္စည်း လိပ်စာမပြည့်စုံသဖြင့် ပို့ဆောင်၍ မရသေးပါ။ ဝန်ဆောင်ခ ၃၀၀၀ ကျပ် ပေးသွင်းပြီး လိပ်စာပြင်ဆင်ရန် http://bit.ly/parcel-mm ကို နှိပ်ပါ',
+    timestamp: Date.now() - 1000 * 60 * 60 * 4 // 4 hours ago
   },
   {
     sender: 'Lucky-Draw',
     body: 'ဂုဏ်ယူပါသည်! သင်သည် ကံစမ်းမဲ သိန်း (၅၀) ကျပ် ဆုမဲပေါက်ပါပြီ။ ဆုငွေ ထုတ်ယူရန် https://claim-prize-mm.top တွင် အကောင့်အတည်ပြုပါ',
-    timestamp: Date.now() - 1000 * 60 * 60 * 5 // 5 hours ago
+    timestamp: Date.now() - 1000 * 60 * 60 * 6 // 6 hours ago
   },
   {
     sender: 'Slot-Official',
@@ -31,6 +46,11 @@ export const SAMPLE_MESSAGES: Omit<SmsMessage, 'id' | 'analysis' | 'isRead'>[] =
     sender: 'WaveMoney',
     body: 'သင့်၏ WavePay အကောင့်မှ ငွေလွှဲခြင်းအတွက် OTP ကုဒ်မှာ 847291 ဖြစ်ပါသည်။ ဤကုဒ်အား မည်သူ့ကိုမျှ မျှဝေခြင်းမပြုပါနှင့်။',
     timestamp: Date.now() - 1000 * 60 * 60 * 28 // 1.2 days ago
+  },
+  {
+    sender: 'AYA-Bank',
+    body: 'Dear customer, your AYA Pay transaction of 15,000 MMK to 09971234567 is successful. Txn ID: 98124801.',
+    timestamp: Date.now() - 1000 * 60 * 60 * 36 // 1.5 days ago
   },
   {
     sender: '09420011223',
