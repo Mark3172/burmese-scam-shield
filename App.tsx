@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBanner } from './src/components/StatusBanner';
 import { MessageCard } from './src/components/MessageCard';
 import { TestMessageModal } from './src/components/TestMessageModal';
+import { ManageRulesModal } from './src/components/ManageRulesModal';
 import { getInitialMessages } from './src/data/sampleMessages';
 import { SmsMessage } from './src/types/detector';
 import { HybridScamDetector } from './src/engine/HybridScamDetector';
@@ -20,7 +21,8 @@ import { HybridScamDetector } from './src/engine/HybridScamDetector';
 export default function App() {
   const [messages, setMessages] = useState<SmsMessage[]>(getInitialMessages());
   const [activeTab, setActiveTab] = useState<'ALL' | 'QUARANTINE' | 'SAFE'>('ALL');
-  const [modalVisible, setModalVisible] = useState(false);
+  const [testModalVisible, setTestModalVisible] = useState(false);
+  const [rulesModalVisible, setRulesModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Counters
@@ -45,7 +47,7 @@ export default function App() {
   });
 
   const handleNewAnalysis = (sender: string, body: string) => {
-    const analysis = HybridScamDetector.analyze(body);
+    const analysis = HybridScamDetector.analyze(body, sender);
     const newMessage: SmsMessage = {
       id: `sms-${Date.now()}`,
       sender,
@@ -56,6 +58,14 @@ export default function App() {
     };
 
     setMessages([newMessage, ...messages]);
+  };
+
+  const reAnalyzeAll = () => {
+    const updated = messages.map(m => ({
+      ...m,
+      analysis: HybridScamDetector.analyze(m.body, m.sender)
+    }));
+    setMessages(updated);
   };
 
   const handleDelete = (id: string) => {
@@ -78,13 +88,23 @@ export default function App() {
           </View>
         </View>
 
-        <TouchableOpacity 
-          style={styles.scanButton} 
-          onPress={() => setModalVisible(true)}
-        >
-          <Ionicons name="add-circle" size={17} color="#FFF" />
-          <Text style={styles.scanButtonText}>စစ်ဆေးရန်</Text>
-        </TouchableOpacity>
+        <View style={styles.topBtnRow}>
+          <TouchableOpacity 
+            style={styles.rulesButton} 
+            onPress={() => setRulesModalVisible(true)}
+          >
+            <Ionicons name="options-outline" size={16} color="#37474F" />
+            <Text style={styles.rulesButtonText}>စည်းမျဉ်းများ</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.scanButton} 
+            onPress={() => setTestModalVisible(true)}
+          >
+            <Ionicons name="add-circle" size={16} color="#FFF" />
+            <Text style={styles.scanButtonText}>စစ်ဆေးရန်</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Real-time Status Banner with Live Indicator */}
@@ -167,9 +187,16 @@ export default function App() {
 
       {/* Interactive Scan & Test Modal */}
       <TestMessageModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        visible={testModalVisible}
+        onClose={() => setTestModalVisible(false)}
         onAnalyze={handleNewAnalysis}
+      />
+
+      {/* Manage Custom Rules Modal */}
+      <ManageRulesModal
+        visible={rulesModalVisible}
+        onClose={() => setRulesModalVisible(false)}
+        onRulesChanged={reAnalyzeAll}
       />
     </SafeAreaView>
   );
@@ -215,18 +242,36 @@ const styles = StyleSheet.create({
     color: '#78909C',
     fontWeight: '600',
   },
+  topBtnRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  rulesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECEFF1',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 18,
+    gap: 4,
+  },
+  rulesButtonText: {
+    color: '#37474F',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
   scanButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1E88E5',
-    paddingHorizontal: 12,
+    paddingHorizontal: 11,
     paddingVertical: 7,
-    borderRadius: 20,
-    gap: 5,
+    borderRadius: 18,
+    gap: 4,
   },
   scanButtonText: {
     color: '#FFF',
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
   },
   searchContainer: {

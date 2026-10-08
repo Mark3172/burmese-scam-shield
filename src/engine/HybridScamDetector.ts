@@ -1,6 +1,7 @@
 import { BurmeseHeuristicsEngine } from './BurmeseHeuristicsEngine';
 import { BurmeseNLPClassifier } from './BurmeseNLPClassifier';
 import { BurmeseTextProcessor } from './BurmeseTextProcessor';
+import { UserRuleStore } from './UserRuleStore';
 import { DetectionCategory, DetectionResult, ThreatLevel } from '../types/detector';
 
 export class HybridScamDetector {
@@ -15,15 +16,47 @@ export class HybridScamDetector {
   };
 
   /**
-   * Evaluates text using Tier 1 (Heuristics) + Tier 2 (ML/NLP Model)
+   * Evaluates text using Whitelist/Blacklist -> Tier 1 (Heuristics) -> Tier 2 (ML/NLP Model)
    */
-  public static analyze(text: string): DetectionResult {
+  public static analyze(text: string, sender: string = ''): DetectionResult {
     const normalized = BurmeseTextProcessor.normalize(text);
+
+    // 0. Priority Check: User Blacklist
+    const blacklistHit = UserRuleStore.isBlacklisted(sender, normalized);
+    if (blacklistHit) {
+      return {
+        threatLevel: 'CRITICAL_SCAM',
+        scamScore: 1.0,
+        category: 'GENERAL_SPAM',
+        categoryLabelMy: 'ပိတ်ပင်ထားသော စာရင်း (User Blacklist)',
+        reasons: [`အသုံးပြုသူ စိတ်ကြိုက်ပိတ်ထားသော အကြောင်းရင်း - ${blacklistHit.reason} (${blacklistHit.pattern})`],
+        detectedUrls: [],
+        matchedKeywords: [blacklistHit.pattern],
+        mlConfidence: 1.0,
+        heuristicsConfidence: 1.0
+      };
+    }
 
     // 1. Tier 1: Regex & Heuristics
     const heuristicsResult = BurmeseHeuristicsEngine.inspect(normalized);
 
-    // 2. Tier 2: On-device NLP Semantic Inference
+    // 2. Priority Check: User Whitelist (Only if no malicious external links found)
+    const whitelistHit = UserRuleStore.isWhitelisted(sender);
+    if (whitelistHit && heuristicsResult.detectedUrls.length === 0) {
+      return {
+        threatLevel: 'SAFE',
+        scamScore: 0.0,
+        category: 'SAFE',
+        categoryLabelMy: this.CATEGORY_LABELS_MY['SAFE'],
+        reasons: [`စိတ်ချရသော တရားဝင်ပေးပို့သူစာရင်း (Trusted Whitelist): ${whitelistHit.label}`],
+        detectedUrls: [],
+        matchedKeywords: [],
+        mlConfidence: 0.0,
+        heuristicsConfidence: 0.0
+      };
+    }
+
+    // 3. Tier 2: On-device NLP Semantic Inference
     const nlpResult = BurmeseNLPClassifier.predict(normalized);
 
     // Combine signals
@@ -32,7 +65,7 @@ export class HybridScamDetector {
       reasons.push(rule.descriptionMy);
     });
 
-    // Whitelist / Safe check override (e.g. Official OTP notification without links)
+    // Whitelist / Safe check override (Official OTP notification without links)
     const isAuthenticOtpNotification = 
       /သင့်၏.*?otp.*?ကုဒ်မှာ\s*\d{4,6}/i.test(normalized) && 
       heuristicsResult.detectedUrls.length === 0 &&
